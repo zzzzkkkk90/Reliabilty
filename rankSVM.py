@@ -1,108 +1,14 @@
-# -*- coding: utf-8 -*-
-# @Author: kicc
-# @Date:   2018-03-31 18:08:47
-# @Last Modified by:   kicc
-# @Last Modified time: 2018-03-31 18:14:56
-
-
 from itertools import combinations, permutations
-from collections import Counter
-
-import xlwt
-from sklearn.model_selection import ShuffleSplit
 import numpy as np
-
 from sklearn import svm, linear_model, cross_validation
-
 import pandas as pd
 
 
 class RankSVM(svm.LinearSVC):
-    """Performs pairwise ranking with an underlying LinearSVC model
-    Input should be a n-class ranking problem, this object will convert it
-    into a two-class classification problem, a setting known as
-    `pairwise ranking`.
-    See object :ref:`svm.LinearSVC` for a full description of parameters.
-    """
 
-    def fit(self, X, y):
-        """
-        Fit a pairwise ranking model.
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features)
-        y : array, shape (n_samples,) or (n_samples, 2)
-        Returns
-        -------
-        self
-        """
-        X_trans, y_trans = self.transform_pairwise(X, y)
-        # print(X_trans,y_trans)
-        super(RankSVM, self).fit(X_trans, y_trans)
-        return self
-
-    def decision_function(self, X):
-        return np.dot(X, self.coef_.ravel())
-
-    def predict(self, X):
-        """
-        Predict an ordering on X. For a list of n samples, this method
-        returns a list from 0 to n-1 with the relative order of the rows of X.
-        The item is given such that items ranked on top have are
-        predicted a higher ordering (i.e. 0 means is the last item
-        and n_samples would be the item ranked on top).
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features)
-        Returns
-        -------
-        ord : array, shape (n_samples,)
-            Returns a list of integers representing the relative order of
-            the rows in X.
-        """
-        if hasattr(self, 'coef_'):
-            return np.argsort(np.dot(X, self.coef_.ravel()))
-        else:
-            raise ValueError("Must call fit() prior to predict()")
-
-    def score(self, X):
-        """
-        Because we transformed into a pairwise problem, chance level is at 0.5
-        """
-        X_tests = self.tst_transform_pairwise(X)
-        return super(RankSVM, self).predict(X_tests)
-
-    def tst_transform_pairwise(self, X):
-        X_new = []
-        perm = permutations(range(X.shape[0]), 2)
-        # print(X.shape[0])
-        for k, (i, j) in enumerate(perm):
-            X_new.append(X[i] - X[j])
-        return np.asarray(X_new)
-
+    #X,y为原始缺陷训练集中软件模块的特征和缺陷个数
+    #输出为模块对
     def transform_pairwise(self, X, y):
-        """Transforms data into pairs with balanced labels for ranking
-        Transforms a n-class ranking problem into a two-class classification
-        problem. Subclasses implementing particular strategies for choosing
-        pairs should override this method.
-        In this method, all pairs are choosen, except for those that have the
-        same target value. The output is an array of balanced classes, i.e.
-        there are the same number of -1 as +1
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features)
-            The data
-        y : array, shape (n_samples,) or (n_samples, 2)
-            Target labels. If it's a 2D array, the second column represents
-            the grouping of samples, i.e., samples with different groups will
-            not be considered.
-        Returns
-        -------
-        X_trans : array, shape (k, n_feaures)
-            Data as pairs
-        y_trans : array, shape (k,)
-            Output class labels, where classes have values {-1, +1}
-        """
         X_new = []
         y_new = []
         y = np.asarray(y)
@@ -116,18 +22,49 @@ class RankSVM(svm.LinearSVC):
                 continue
             X_new.append(X[i] - X[j])
             y_new.append(np.sign(y[i, 0] - y[j, 0]))  # -1/1
-            # output balanced classes
 
-        X_res = np.asarray(X_new)
-        y_res = np.asarray(y_new)
-        return X_res, y_res
+        X_pairs = np.asarray(X_new)
+        y_pairs = np.asarray(y_new)
+        return X_pairs, y_pairs
+
+
+    #X为测试集中软件模块的特征
+    def tst_transform_pairwise(self, X):
+        X_new = []
+        perm = permutations(range(X.shape[0]), 2)
+        # print(X.shape[0])
+        for k, (i, j) in enumerate(perm):
+            X_new.append(X[i] - X[j])
+        return np.asarray(X_new)
+
+
+    def fit(self, X, y):
+        X_pairs, y_pairs = self.transform_pairwise(X, y)
+        # print(X_trans,y_trans)
+        super(RankSVM, self).fit(X_pairs, y_pairs)
+        return self
+
+
+
+    def predict2(self, X):
+        X_tests = self.tst_transform_pairwise(X)
+        y_pred = super(RankSVM, self).predict(X_tests)
+
+        length = X.shape[0]
+
+        count = self.rank_list(y_pred, length)
+        pred_bug_rank = self.trans(count=count)
+
+        return pred_bug_rank
+
 
     def rank_list(self, y, length):
         '''
-
-        :param y:预测出的 -1 +1 序列 就为[ 1,-1,1,-1,1,-1,-1,1,-1,1,1,-1]
-        :param length: 原来测试数据的长度 如测试数据为(x1,x2,x3,x4)，这里length即为4
-        :return: 排序后从小到大的下标
+        比如测试集中软件模块为x0,x1,x2,x3，y为[1,-1,1,   -1,-1,1,   1,1,1,   -1,-1,-1]
+        则表明x0>x1,x0<x2,x0>x3,   x1<x0,x1<x2,x1<x3  x2>x0,x2>x1,x2>x3   x3<x0,x3<x1,x3<x2
+        最终得出x3<x1<x0<x2
+        length: 测试集中软件模块个数 这里length即为4
+        :return: 排序后从小到大的下标，这里为3,1,0,2
         '''
         # 计数数组
         count_list = []
@@ -161,13 +98,8 @@ class RankSVM(svm.LinearSVC):
         # 返回的就是一个从小到大的下标
         return max_list
 
-    def predict2(self, X):
-        y_pred = self.score(X)
-        length = X.shape[0]
-        count = self.rank_list(y_pred, length)
-        pred_bug_rank = self.trans(count=count)
-        return pred_bug_rank
-
+    #对得到的从小到大的模块排序，赋予每个模块不同的缺陷数目
+    #比如预测模块的缺陷个数排序为x3<x1<x0<x2，则y0=2，y1=1，y2=3，y3=0，返回值为[2,1,3,0]
     def trans(self, count):
         t = []
         for i, j in enumerate(count):
@@ -180,3 +112,14 @@ class RankSVM(svm.LinearSVC):
             res.append(i[0])
 
         return res
+
+'''
+if __name__ == '__main__':
+    X = np.array([[1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6],[7, 7], [8, 8], [9, 9], [10, 10], [11, 11], [12, 12]])
+    y = np.array([5, 4, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
+
+    X_trans = RankSVM().rank_list([1,-1,1,-1,-1,1,1,1,1,-1,-1,-1],4)
+    x_count=RankSVM().trans(X_trans)
+    print(X_trans)
+    print(x_count)
+'''
