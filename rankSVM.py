@@ -7,7 +7,7 @@ import pandas as pd
 class RankSVM(svm.LinearSVC):
     
     def __init__(self, C=1.0):
-        super.__init(C=C)
+        super().__init__(C=C)
     
     #X,y为原始缺陷训练集中软件模块的特征和缺陷个数
     #输出为模块对
