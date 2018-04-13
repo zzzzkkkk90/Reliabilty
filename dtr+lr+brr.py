@@ -32,13 +32,13 @@ def bootstrap():
         rs = RankSVM().fit(training_data_X, training_data_y)
         rs_pred_y = np.around(rs.predict2(testing_data_X))
         rs_fpa = PerformanceMeasure(testing_data_y, rs_pred_y).FPA()
-        rs_aae_result = PerformanceMeasure(testing_data_y, rs_pred_y).AEE()
+        rs_aae_result = PerformanceMeasure(testing_data_y, rs_pred_y).AAE()
         print('rs_fpa:', rs_fpa, 'rs_aae_result', rs_aae_result)
 
         lr = linear_model.LinearRegression().fit(training_data_X, training_data_y)
         lr_pred_y = np.around(lr.predict(testing_data_X))
         lr_fpa = PerformanceMeasure(testing_data_y, lr_pred_y).FPA()
-        lr_aae_result = PerformanceMeasure(testing_data_y, lr_pred_y).AEE()
+        lr_aae_result = PerformanceMeasure(testing_data_y, lr_pred_y).AAE()
         print('lr_fpa:', lr_fpa, 'lr_aae_result', lr_aae_result)
 
 
