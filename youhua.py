@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Kicc Shen
-# @Date:   2018-04-12 19:36:53
-# @Last Modified by:   Kicc Shen
-# @Last Modified time: 2018-04-13 15:49:05
 import numpy as np
 
 from PerformanceMeasure import PerformanceMeasure
@@ -13,12 +8,14 @@ from rankSVM import RankSVM
 
 from myGAFT import pyGaft
 
+import importlib
 
 def bootstrap():
 
     #dataset = Processing().import_data()
+    count = 0
     for dataset, filename in Processing().import_single_data():
-
+        count+=1
         training_data_X, training_data_y, testing_data_X, testing_data_y = Processing(
         ).separate_data(dataset)
 
@@ -53,8 +50,11 @@ def bootstrap():
                     P=P, r=r, u=u, n=n).run()
         # 5.编写predict3
         # w 从best_fit中获得
-        from best_fit import best_fit
-        w, fitness = best_fit[-1][-2], best_fit[-1][-1]
+        if count == 1:
+            import best_fit
+        else:
+            importlib.reload(best_fit)
+        w, fitness = best_fit.best_fit[-1][-2], best_fit.best_fit[-1][-1]
         print('w = ', w)
         rs_pred_y = RankSVM(w=w).predict3(testing_data_X)
         rs_pred_y = np.around(rs_pred_y)
