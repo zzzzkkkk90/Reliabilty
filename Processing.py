@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import resample
 import os
+
+
 class Processing():
 
     def __init__(self):
-        self.folder_name = "data"
+        self.folder_name = "test"
 
     def import_data(self):
-
         '''
 
         读取文件夹中所有文件数据
@@ -21,7 +22,8 @@ class Processing():
 
         dataset = pd.core.frame.DataFrame()
 
-        folder_path = self.folder_name + '//'  # In Mac the path use '/' to identify the secondary path
+        # In Mac the path use '/' to identify the secondary path
+        folder_path = self.folder_name + '//'
 
         for root, dirs, files in os.walk(folder_path):
 
@@ -54,9 +56,7 @@ class Processing():
 
                 yield dataset, file
 
-
-    def separate_data(self,original_data):
-
+    def separate_data(self, original_data):
         '''
 
         用out-of-sample bootstrap方法产生训练集和测试集,参考论文An Empirical Comparison of Model Validation Techniques for Defect Prediction Models
@@ -73,10 +73,11 @@ class Processing():
 
         original_data = np.array(original_data)
 
-        training_data = resample(original_data)  # 从originaldata中有放回的抽样，size(trainingdata)==size(originaldata)
+        # 从originaldata中有放回的抽样，size(trainingdata)==size(originaldata)
+        training_data = resample(original_data)
 
         k = len(training_data[0])
-
+        # print('k =', k)
         # 先转换成list 在进行数据筛选
 
         original_data = original_data.tolist()
@@ -92,8 +93,13 @@ class Processing():
 
         testing_data = np.array(testing_data)
 
-        #print(len(testing_data)/len(training_data))
+        # print(len(testing_data)/len(training_data))
 
+        training_data = np.array(training_data)
+
+        # 降序排列train_data
+        training_data = sorted(
+            training_data, key=lambda x: x[-1], reverse=True)
         training_data = np.array(training_data)
 
         training_data_X = training_data[:, 0:k - 1]
@@ -105,8 +111,6 @@ class Processing():
         testing_data_y = testing_data[:, k - 1]
 
         return training_data_X, training_data_y, testing_data_X, testing_data_y
-
-
 
     def cross_validation(self, original_data):
         """
@@ -283,6 +287,7 @@ class Processing():
         '''
 
         return training_data_list, testing_data_list
+
 
 '''
     def test(self):

@@ -6,11 +6,12 @@ import pandas as pd
 
 class RankSVM(svm.LinearSVC):
 
-    def __init__(self, C=1.0):
+    def __init__(self, C=1.0, w=None):
         super().__init__(C=C)
+        self.w = w
 
-    #X,y为原始缺陷训练集中软件模块的特征和缺陷个数
-    #输出为模块对
+    # X,y为原始缺陷训练集中软件模块的特征和缺陷个数
+    # 输出为模块对
     def transform_pairwise(self, X, y):
         X_new = []
         y_new = []
@@ -26,12 +27,11 @@ class RankSVM(svm.LinearSVC):
             X_new.append(X[i] - X[j])
             y_new.append(np.sign(y[i, 0] - y[j, 0]))  # -1/1
 
-        X_pairs = np.asarray(X_new)
-        y_pairs = np.asarray(y_new)
+        X_pairs = np.asarray(X_new, dtype=np.float)
+        y_pairs = np.asarray(y_new, dtype=np.float)
         return X_pairs, y_pairs
 
-
-    #X为测试集中软件模块的特征
+    # X为测试集中软件模块的特征
     def tst_transform_pairwise(self, X):
         X_new = []
         perm = permutations(range(X.shape[0]), 2)
@@ -40,14 +40,11 @@ class RankSVM(svm.LinearSVC):
             X_new.append(X[i] - X[j])
         return np.asarray(X_new)
 
-
     def fit(self, X, y):
         X_pairs, y_pairs = self.transform_pairwise(X, y)
         # print(X_trans,y_trans)
         super(RankSVM, self).fit(X_pairs, y_pairs)
         return self
-
-
 
     def predict2(self, X):
         X_tests = self.tst_transform_pairwise(X)
@@ -60,6 +57,32 @@ class RankSVM(svm.LinearSVC):
 
         return pred_bug_rank
 
+    def predict3(self, X):
+        """
+        由genetic ALgorithm求出来的w进行预测
+        """
+        X_tests = self.tst_transform_pairwise(X)
+        y_pred = self.predict_with_w(X_tests)
+
+        length = X.shape[0]
+
+        count = self.rank_list(y_pred, length)
+        pred_bug_rank = self.trans(count=count)
+
+        return pred_bug_rank
+
+    def predict_with_w(self, X):
+        """
+        Mi > Mk <==> <w, xj-xk> > 0
+        return: [1,-1,1,1,1-,1,...,1,-1,1]
+        """
+        y_pred = []
+        for xi in X:
+            if np.dot(self.w, xi) > 0:
+                y_pred.append(1)
+            else:
+                y_pred.append(-1)
+        return y_pred
 
     def rank_list(self, y, length):
         '''
@@ -101,8 +124,8 @@ class RankSVM(svm.LinearSVC):
         # 返回的就是一个从小到大的下标
         return max_list
 
-    #对得到的从小到大的模块排序，赋予每个模块不同的缺陷数目
-    #比如预测模块的缺陷个数排序为x3<x1<x0<x2，则y0=2，y1=1，y2=3，y3=0，返回值为[2,1,3,0]
+    # 对得到的从小到大的模块排序，赋予每个模块不同的缺陷数目
+    # 比如预测模块的缺陷个数排序为x3<x1<x0<x2，则y0=2，y1=1，y2=3，y3=0，返回值为[2,1,3,0]
     def trans(self, count):
         t = []
         for i, j in enumerate(count):
@@ -115,6 +138,7 @@ class RankSVM(svm.LinearSVC):
             res.append(i[0])
 
         return res
+
 
 '''
 if __name__ == '__main__':
