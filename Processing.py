@@ -96,11 +96,11 @@ class Processing():
 
         training_data = np.array(training_data)
 
-        training_data_X = training_data[:, 0:k - 2]
+        training_data_X = training_data[:, 0:k - 1]
 
         training_data_y = training_data[:, k - 1]
 
-        testing_data_X = testing_data[:, 0:k - 2]
+        testing_data_X = testing_data[:, 0:k - 1]
 
         testing_data_y = testing_data[:, k - 1]
 
