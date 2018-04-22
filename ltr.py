@@ -10,7 +10,7 @@ from PerformanceMeasure import PerformanceMeasure
 from Processing import Processing
 
 
-from myGAFT import pyGaft
+from myGAFtoLTR import pyGaft
 
 import importlib
 
