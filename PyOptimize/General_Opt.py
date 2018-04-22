@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+# @Author: kicc
+# @Date:   2018-04-09 12:09:43
+# @Last Modified by:   kicc
+# @Last Modified time: 2018-04-18 14:05:55
+
+import numpy as np
+
+
 class Optimizer(object):
     """docstring for Optimizer"""
 
@@ -49,7 +58,7 @@ class Test_function(object):
             function_sum += u[i] * n[i] * max((1 - r[i] * dot(x, P[i])), 0)
         f = function_sum + 0.5 * ed_dist(x)
         return f
-    
+
     def LTR(self, a, X, y):
         """
         ListWise中ga的应用
@@ -82,3 +91,5 @@ class Test_function(object):
             pred_y.append(yi)
 
         function_fpa = FPA(y, pred_y)
+
+        return function_fpa
