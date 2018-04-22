@@ -52,11 +52,14 @@ class PerformanceMeasure():
         P = sum(np.sum(testBug[m:]) / N for m in range(K + 1)) / K
         return P
 
-    def calc_UN(self):
+    def calc_UN(self, type):
         """
-        计算
+        计算cost-sensitive / information retrieval
             U-list = [u_jk, u_jk, u_jk,...,u_10, u_10,...,u_10]
             N-list = [n_jk, n_jk, n_jk,...,n_10, n_10,...,n_10]
+
+        type: 选择是cs 还是 ir
+        ir: N-list = [1. 1. 1. ... 1.]
         """
         # y算是train_y
         # y = np.array([0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
@@ -100,7 +103,11 @@ class PerformanceMeasure():
         N_list = [max_n / n for n in N_list]
         # print(N_list)
 
-        return U_list, N_list
+        if type == 'cs':
+            return U_list, N_list
+        elif type == 'ir':
+            N_list = [1] * len(N_list)
+            return U_list, N_list
 
     def calc_U_N(self, origin_y, large_list, index1, small_list, index2, fpa_perfect):
         """
