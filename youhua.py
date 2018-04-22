@@ -35,7 +35,7 @@ def bootstrap():
         # r = [1, 1, 1, 1, 1]
 
         # 3.用training_data_y计算u,n
-        u, n = PerformanceMeasure(training_data_y).calc_UN()
+        u, n = PerformanceMeasure(training_data_y).calc_UN(type='cs')
         # print(len(u), len(n))
         print(type(u[0]), type(n[0]))
 
