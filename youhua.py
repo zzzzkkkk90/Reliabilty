@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# @Author: Kicc Shen
+# @Date:   2018-04-12 19:36:53
+# @Last Modified by:   Kicc Shen
+# @Last Modified time: 2018-04-22 22:01:54
 import numpy as np
 
 from PerformanceMeasure import PerformanceMeasure
@@ -10,12 +15,14 @@ from myGAFT import pyGaft
 
 import importlib
 
+
 def bootstrap():
 
     #dataset = Processing().import_data()
     count = 0
     for dataset, filename in Processing().import_single_data():
-        count+=1
+        print(filename)
+        count += 1
         training_data_X, training_data_y, testing_data_X, testing_data_y = Processing(
         ).separate_data(dataset)
 
@@ -42,11 +49,11 @@ def bootstrap():
         # 4. 将Pi,ri,u,n导入genetic algorithm 计算w
         from PyOptimize.General_Opt import Test_function
 
-        def Loss(x, P, r, u, n):
-            return Test_function().Loss(x, P, r, u, n)
+        def Loss(x, **kwargs):
+            return Test_function().Loss(x, **kwargs)
 
         ga = pyGaft(objfunc=Loss, var_bounds=[(-2, 2)] * 20,
-                    individual_size=50, max_iter=200,
+                    individual_size=50, max_iter=200, max_or_min='min',
                     P=P, r=r, u=u, n=n).run()
         # 5.编写predict3
         # w 从best_fit中获得
@@ -60,6 +67,7 @@ def bootstrap():
         rs_pred_y = np.around(rs_pred_y)
         rs_fpa = PerformanceMeasure(testing_data_y, rs_pred_y).FPA()
         print('rs_fpa:', rs_fpa)
+        # f1.append(rs_fpa)
 
         # RankSVM 效果
         from sklearn.utils import shuffle
@@ -67,8 +75,12 @@ def bootstrap():
         rs2 = RankSVM().fit(X_shuf, y_shuf)
         rs_pred_y2 = np.around(rs2.predict2(testing_data_X))
         rs_fpa2 = PerformanceMeasure(testing_data_y, rs_pred_y2).FPA()
-        rs_aae_result = PerformanceMeasure(testing_data_y, rs_pred_y2).AAE()
+        rs_aae_result = PerformanceMeasure(
+            testing_data_y, rs_pred_y2).AAE()
         print('rs_fpa2:', rs_fpa2)
+        # f2.append(rs_fpa2)
+    # print('aver of f1 in {0} is {1}: '.format(filename, sum(f1) / 5))
+    # print('aver of f2 in {0} is {1}: '.format(filename, sum(f2) / 5))
 
 
 if __name__ == '__main__':
