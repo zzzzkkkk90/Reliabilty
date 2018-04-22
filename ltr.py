@@ -2,7 +2,7 @@
 # @Author: Kicc Shen
 # @Date:   2018-04-12 19:36:53
 # @Last Modified by:   kicc
-# @Last Modified time: 2018-04-22 19:54:21
+# @Last Modified time: 2018-04-22 22:09:17
 import numpy as np
 
 from PerformanceMeasure import PerformanceMeasure
@@ -10,7 +10,7 @@ from PerformanceMeasure import PerformanceMeasure
 from Processing import Processing
 
 
-from myGAFtoLTR import pyGaft
+from myGAFT import pyGaft
 
 import importlib
 
@@ -31,11 +31,11 @@ def bootstrap():
 
         from PyOptimize.General_Opt import Test_function
 
-        def LTR(a, X, y):
-            return Test_function().LTR(a, X, y)
+        def LTR(a, **kwargs):
+            return Test_function().LTR(a, **kwargs)
 
         ga = pyGaft(objfunc=LTR, var_bounds=[(-2, 2)] * 20,
-                    individual_size=50, max_iter=10,
+                    individual_size=50, max_iter=10, max_or_min='max',
                     X=training_data_X, y=training_data_y).run()
 
         if count == 1:
