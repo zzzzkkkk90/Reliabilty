@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# @Author: Kicc Shen
+# @Date:   2018-04-12 19:36:53
+# @Last Modified by:   kicc
+# @Last Modified time: 2018-04-18 14:06:12
 import numpy as np
 
 from PerformanceMeasure import PerformanceMeasure
@@ -5,7 +10,7 @@ from PerformanceMeasure import PerformanceMeasure
 from Processing import Processing
 
 
-from myGAFTtoLTR import pyGaft
+from myGAFT import pyGaft
 
 import importlib
 
