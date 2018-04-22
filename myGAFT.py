@@ -2,7 +2,7 @@
 # @Author: kicc
 # @Date:   2018-04-09 12:02:28
 # @Last Modified by:   Kicc Shen
-# @Last Modified time: 2018-04-13 11:02:56
+# @Last Modified time: 2018-04-22 22:00:59
 from PyOptimize.General_Opt import Optimizer
 import numpy as np
 from gaft import GAEngine
@@ -18,13 +18,9 @@ from gaft.plugin_interfaces.analysis import OnTheFlyAnalysis
 
 
 class pyGaft(Optimizer):
-    def __init__(self, objfunc, var_bounds, individual_size, max_iter, P, r, u, n):
+    def __init__(self, objfunc, var_bounds, individual_size, max_iter, max_or_min, **kwargs):
         super().__init__(objfunc)
         self.max_iter = max_iter
-        self.P = P
-        self.r = r
-        self.u = u
-        self.n = n
 
         # 定义个体 / 种群
         self.individual = BinaryIndividual(
@@ -51,7 +47,10 @@ class pyGaft(Optimizer):
             """
             x = indv.solution
 
-            return -objfunc(x, self.P, self.r, self.u, self.n)
+            if max_or_min == 'max':
+                return objfunc(x, **kwargs)
+            else:
+                return -objfunc(x, **kwargs)
 
         @self.engine.analysis_register
         class ConsoleOutputAnalysis(OnTheFlyAnalysis):
@@ -83,12 +82,18 @@ if __name__ == '__main__':
     u = 1
     n = 1
 
+    X = [[1, 1, 2], [1, -1, 3], [3, 2, 1], [1, -5, 1], [2, 1, -2]]
+    y = [1, 1, 1, 1, 1]
+
     def Rosenbrock(x):
         return Test_function().Rosenbrock(x)
 
-    def Loss(x, P, r, u, n):
-        return Test_function().Loss(x, P, r, u, n)
+    def Loss(x, **kwargs):
+        return Test_function().Loss(x, **kwargs)
 
-    GAFT_Test = pyGaft(objfunc=Loss, var_bounds=[(-2, 2)] * 3,
-                       individual_size=50, max_iter=200,
-                       P=P, r=r, u=u, n=n).run()
+    def LTR(a, **kwargs):
+        return Test_function().LTR(a, **kwargs)
+
+    GAFT_Test = pyGaft(objfunc=LTR, var_bounds=[(-2, 2)] * 3,
+                       individual_size=50, max_iter=10,
+                       X=X, y=y).run()
