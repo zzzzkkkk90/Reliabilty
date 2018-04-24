@@ -61,14 +61,14 @@ class pyGaft(Optimizer):
                 best_indv = population.best_indv(engine.fitness)
                 msg = 'Generation: {}, best fitness: {:.3f}'.format(
                     g, engine.fitness(best_indv))
-                self.logger.info(msg)
+                # self.logger.info(msg)
 
             def finalize(self, population, engine):
                 best_indv = population.best_indv(engine.fitness)
                 x = best_indv.solution
                 y = engine.fitness(best_indv)
                 msg = 'Optimal solution: ({}, {})'.format(x, y)
-                self.logger.info(msg)
+                # self.logger.info(msg)
 
     def run(self):
         self.engine.run(ng=self.max_iter)
