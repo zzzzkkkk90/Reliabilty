@@ -1,0 +1,12 @@
+1.程序首先需要安装gaft这个遗传算法的包，安装说明https://github.com/PytLab/gaft/blob/master/INSTALL.md 。
+如果是Windows系统下面from source来进行安装，安装时先把gaft包从GitHub上面下载下来，然后在anaconda promt下运行python setup.py install。
+这样使gaft包也安装在了anaconda自带的Python沙箱环境中。
+类似于安装这个包：https://blog.csdn.net/lalalawxt/article/details/70904153
+2. 程序主要包括一个主要的类： a，Main类主要是调取CSRankSVM, Ranking SVM, DTR,BRR,LR的代码。
+b,  Processing类中包含import_single_data函数（读取文件），separate_data函数（将数据集切分为训练集和测试集） 
+c, Performance类中包含FPA函数(计算FPA值)，calc_un函数（计算CSRankSVM算法中的两个代价参数） 
+d, myGAFT是安装的gaft包中自带的代码，该代码设置遗传算法的一些参数，如交叉变异概率。 
+E, General_Opt类是设定CSRankSVM算法损失函数的类。 F，rankSVM是实现Ranking SVM算法的类。 
+3.点击运行Main函数就可以运行整个程序。
+输出结果如下，gaft.ConsoleOutputAnalysis   INFO     Generation: 199, best fitness: -37.368 表示在第200次迭代时，损失函数的值为-37.368. 
+optimal solution表示此次迭代的最优w值。
