@@ -18,10 +18,8 @@ import importlib
 def bootstrap():
 
     #dataset = Processing().import_data()
-    count = 0
     for dataset, filename in Processing().import_single_data():
         print(filename)
-        count += 1
         training_data_X, training_data_y, testing_data_X, testing_data_y = Processing(
         ).separate_data(dataset)
 
@@ -38,10 +36,8 @@ def bootstrap():
                     individual_size=50, max_iter=10, max_or_min='max',
                     X=training_data_X, y=training_data_y).run()
 
-        if count == 1:
-            import best_fit
-        else:
-            importlib.reload(best_fit)
+
+        importlib.reload(best_fit)
 
         a, fitness_value = best_fit.best_fit[-1][-2], best_fit.best_fit[-1][-1]
         print('a = {0}'.format(a))
@@ -55,4 +51,6 @@ def bootstrap():
 
 
 if __name__ == '__main__':
+    with open('best_fit.py', 'w') as f:
+        import best_fit
     bootstrap()
