@@ -108,6 +108,9 @@ class PerformanceMeasure():
         elif type == 'ir':
             N_list = [1] * len(N_list)
             return U_list, N_list
+        elif type=='svm':
+            U_list = [1] * len(U_list)
+            return U_list, N_list
 
     def calc_U_N(self, origin_y, large_list, index1, small_list, index2, fpa_perfect):
         """
