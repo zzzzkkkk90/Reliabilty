@@ -55,6 +55,63 @@ class Processing():
                 dataset = pd.read_csv(file_path)
 
                 yield dataset, file
+    
+    def import_single_data_withduo(self):
+        """
+        成对的读取数据，
+        数据存放结构：
+        /dataset/1/camel-1.0.csv
+        /dataset/1/camel-1.2.csv
+        /dataset/2/camel-1.2.csv
+        /dataset/2/camel-1.4.csv
+        ...
+
+        return: trainx, trainy, testx, testy, foldername, trainname, testname
+        """
+        dataset_train = pd.core.frame.DataFrame()
+        dataset_test = pd.core.frame.DataFrame()
+
+        folder_path = self.folder_name + '/'
+
+        def transform_data(original_data):
+            original_data = original_data.iloc[:, 3:]
+
+            original_data = np.array(original_data)
+
+            k = len(original_data[0])
+
+            # 降序排列train_data
+            original_data = sorted(
+                original_data, key=lambda x: x[-1], reverse=True)
+
+            original_data = np.array(original_data)
+            print(original_data.shape)
+            original_data_X = original_data[:, 0:k - 1]
+
+            original_data_y = original_data[:, k - 1]
+
+            return original_data_X, original_data_y
+
+        for root, dirs, files, in os.walk(folder_path):
+
+            if root == 'dataset/':
+                print(dirs)
+                thisroot = root
+                for dir in dirs:
+                    dir_path = os.path.join(thisroot, dir)
+
+                    for root, dirs, files, in os.walk(dir_path):
+                        file_path_train = os.path.join(dir_path, files[0])
+                        file_path_test = os.path.join(dir_path, files[1])
+                        # print(file_path_test)
+                        dataset_train = pd.read_csv(file_path_train)
+                        dataset_test = pd.read_csv(file_path_test)
+
+                        training_data_x, training_data_y = transform_data(
+                            dataset_train)
+                        testing_data_x, testing_data_y = transform_data(
+                            dataset_test)
+                        yield training_data_x, training_data_y, testing_data_x, testing_data_y, dir, files[0], files[1]
 
     def separate_data(self, original_data):
         '''
