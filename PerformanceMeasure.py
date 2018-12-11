@@ -326,53 +326,6 @@ class PerformanceMeasure():
                     break
 
         return total / number
-
-    
-    
-    
-     def PofBS20(self, codeN, percentage):
-        '''
-        检测排序前20%的代码行数，能检测出百分之多少的缺陷,Percentage of Bugs
-        有10个模块m1,m1,m2,m3，...,m10. 真实缺陷个数分别为1,4,2,1,5,1,3,1,6,1,self.real=[1,4,2,1,5,1,3,1,6,1]
-        代码行数分别为[10,20,30,40,50,60,70,80,90,100]
-        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为5，self.pred=[0,3,5,1,3,4,7,0,1,1]
-        预测出缺陷密度排序为m3(0.166) m2(0.149) m7(0.100), m6(0.06), m5(0.059), m4(0.025), m9(0.011), m10(0.01), m1(0.0), m8(0.0)
-        pofbs20=(2+4)/(1+4+2+1+5+1+3+1+6+1)=0.28
-        '''
-
-        preddensity = [j / i for i, j in zip(codeN, self.pred)]
-
-        tuple_real, tuple_pred = [], []
-        for idx, real in enumerate(self.real):
-            tuple_real.append((idx + 1, real)) #让软件模块的下标是从1开始了，而不是从0开始
-
-        for idx, pred in enumerate(preddensity):
-            tuple_pred.append((idx + 1, pred))
-
-        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
-        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
-        '''
-        print("sorted_real ：", sorted_real)
-        print("sorted_pred ：", sorted_pred)
-        print('totalbugs:',sum(self.real))
-        print('totalsloc:',sum(codeN))
-        '''
-
-        sloc = 0.0
-        bugs=0.0
-        for i in range(len(self.real)):
-            index = sorted_pred[i][0] #预测缺陷密度排在第i位的模块的index
-            #print ('预测缺陷密度排在第',i,'位的软件模块的index等于：',index)
-            for real in sorted_real:
-                if index == real[0]: #如果缺陷密度排在第一位的模块的index
-                    bugs += real[1]
-                    sloc+=codeN[real[0]]
-                    #print('the real number of bugs of this module is',real[1],'the sloc of this module is',codeN[real[0]])
-                    #print ('the cumulative bugs is',bugs,',the cumulative sloc is',sloc)
-            if sloc>sum(codeN)*percentage:
-                break
-
-        return bugs / sum(self.real)
     
     
     def ranking(self):
