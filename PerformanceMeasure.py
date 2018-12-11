@@ -54,14 +54,27 @@ class PerformanceMeasure():
         P = sum(np.sum(testBug[m:]) / N for m in range(K + 1)) / K
         return P
 
-    def PofB20(self):
+    def CLC(self):
+        '''
+        CLC和FPA线性相关，在A Learning-to-Rank Approach to Software Defect Prediction这篇论文有证明
+        '''
+        K = len(self.real)
+        N = np.sum(self.real)
+        sort_axis = np.argsort(self.pred)
+        testBug = np.array(self.real)
+        testBug = testBug[sort_axis]
+        P = sum(np.sum(testBug[m:]) / N for m in range(K + 1)) / K
+        CLC=P-(1.0/(2*K))
+        return CLC
+    
+    
+    def PofB20(self, percentage):
         '''
         检测排序前20%的模块，能检测出百分之多少的缺陷,Percentage of Bugs
         有10个模块m1,m2,m3,m4，...,m1o. 真实缺陷个数分别为1,4,2,1,5,1,3,1,6,1,self.real=[1,4,2,1,5,1,3,1,6,1]
         预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为5，self.pred=[0,3,5,1,3,4,7,0,1,1]
         预测出排序在前20%的模块为m7，m3
         pofb20=(2+3)/(1+4+2+1+5+1+3+1+6+1)=0.28
-
         '''
         tuple_real, tuple_pred = [], []
         for idx, real in enumerate(self.real):
@@ -77,7 +90,7 @@ class PerformanceMeasure():
         # print("sorted_pred ：", sorted_pred)
 
         length = len(self.real)
-        number = int(length * 0.2)
+        number = int(length * percentage)
         total = 0
         for i in range(number):
             num = sorted_pred[i][0]
@@ -89,165 +102,8 @@ class PerformanceMeasure():
         sum_real = sum(self.real)
 
         return total / sum_real
-
-    def PofD20(self):
-        '''
-        检测排序前20%的模块中有百分之多少是真的是有缺陷的, Percentage of defective modules
-        有10个模块m1,m2,m3,m4，...,m1o. 真实缺陷个数分别为1,0,0,0,5,0,4,0,0,1,self.real=[1,0,0,0,5,0,1,0,0,1]
-        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为5，self.pred=[0,3,5,1,3,4,7,0,1,1]
-        预测出排序在前20%的模块为m7，m3
-        pofb20=1/(20%*10)=0.5
-
-        '''
-        tuple_real, tuple_pred = [], []
-        for idx, real in enumerate(self.real):
-            tuple_real.append((idx + 1, real))
-
-        for idx, pred in enumerate(self.pred):
-            tuple_pred.append((idx + 1, pred))
-
-        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
-        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
-
-        # print("sorted_real ：", sorted_real)
-        # print("sorted_pred ：", sorted_pred)
-
-        length = len(self.real)
-        number = int(length * 0.2)
-
-        total = 0
-        for i in range(number):
-            num = sorted_pred[i][0]
-            for real in sorted_real:
-                if num == real[0]:
-                    if real[1] != 0:
-                        # 有缺陷
-                        total += 1
-                    break
-
-        return total / number
-
-    def ranking(self):
-        '''
-        检测真实缺陷个数最大的模块被排在了第%位，真实缺陷个数第二大的模块被排到了第几位，.....真实缺陷个数第五大的模块被排到了第几位
-        有10个模块m1,m2,m3,m4，...,m10. 真实缺陷个数分别为1,0,3,0,5,0,3,0,0,1,self.real=[1,0,3,0,5,0,3,0,0,1]
-        真实的排序为m5>m3>m7>m1>m10>m2>m4>m6>m8>m9
-        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为1，self.pred=[0,3,5,1,3, 4,7,0,1,1]
-        预测出来的排序为m7>m3>m6>m2>m5>m4>m9>m10>m1>m8
-        检测真实缺陷个数最大的模块m5被排在了第5/10位，真实缺陷个数第二大的模块被排到了第2/10位，
-        真实缺陷个数第3大的模块m7被排到了第1/10位，真实缺陷个数第4大的模块m1被排到了第9/10位，真实缺陷个数第5大的模块m10被排到了第8/10 位，
-        输出的是个向量[0.5,0.2,0.1,0.9,0.8]
-        缺陷个数相同时，模块的排序会不同，比如预测的m1和m8的缺陷个数都是0，有可能m1排在m8前面，有可能后面
-        '''
-        # 将self.real=[1,0,3,0,5,0,3,0,0,1] ---->  [(1,1), (2,0), (3,3) ... (10, 1)]形式
-        tuple_real, tuple_pred = [], []
-        for idx, real in enumerate(self.real):
-            tuple_real.append((idx + 1, real))
-
-        for idx, pred in enumerate(self.pred):
-            tuple_pred.append((idx + 1, pred))
-
-        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
-        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
-        # print("sorted_real ：", sorted_real)
-        # print("sorted_pred ：", sorted_pred)
-
-        num_real = []
-        count = 0
-        for item in sorted_real:
-            num_real.append(item[0])
-            count += 1
-            if count > 4:
-                break
-
-            def helper(num_real):
-                """
-                检测真实缺陷个数前五大的模块被排到第几位
-                param: num_real: like [5, 3, 7, 1, 10]
-                根据num_real去sorted_pred中寻找对应的位数
-                """
-                result_vec = []
-                for num in num_real:
-                    for idx, pred in enumerate(sorted_pred):
-                        # pred = (7 ,7)..
-                        if num == pred[0]:
-                            result_vec.append(idx + 1)
-                            break
-                length = len(sorted_pred)
-                return [item / length for item in result_vec]
-
-        return helper(num_real=num_real)
-
-        def OPT1(self,codeN):
-        codeN_sum = np.sum(codeN)
-        pred_sum = np.sum(self.pred)
-        real_sum = np.sum(self.real)
-        
-        if pred_sum == 0:
-            pred_sum = 1
-            
-        if codeN_sum == 0:
-            codeN_sum = 1
-
-        optimal_index = [j/i if j!=0 and i!=0 else 0 for i , j in zip(codeN,self.real)]
-        optimal_index = list(np.argsort(optimal_index))
-        optimal_index.reverse()
-
-        pred_index = [j / i if j!=0 and i!=0 else 0 for i, j in zip(codeN, self.pred)]
-        pred_index = list(np.argsort(pred_index))
-        pred_index.reverse()
-
-        optimal_X = [0]
-        optimal_Y = [0]
-        for i in optimal_index:
-            optimal_X.append(codeN[i]/codeN_sum + optimal_X[-1])
-            optimal_Y.append(self.real[i]/real_sum + optimal_Y[-1])
-
-        optimal_auc = 0.
-        prev_x = 0
-        prev_y = 0
-        for x, y in zip(optimal_X,optimal_Y):
-            if x != prev_x:
-                optimal_auc += (x - prev_x) * (y + prev_y)/2.
-                prev_x = x
-                prev_y = y
-
-        pred_X = [0]
-        pred_Y = [0]
-        for i in pred_index:
-            pred_X.append(codeN[i]/codeN_sum + pred_X[-1])
-            pred_Y.append(self.real[i]/real_sum + pred_Y[-1])
-
-        pred_auc = 0.
-        prev_x = 0
-        prev_y = 0
-        for x, y in zip(pred_X, pred_Y):
-            if x != prev_x:
-                pred_auc += (x - prev_x) * (y + prev_y)/2.
-                prev_x = x
-                prev_y = y
-
-        optimal_index.reverse()
-        mini_X = [0]
-        mini_Y = [0]
-        for i in optimal_index:
-            mini_X.append(codeN[i] / codeN_sum + mini_X[-1])
-            mini_Y.append(self.real[i] / real_sum + mini_Y[-1])
-            print("({},{})".format(mini_X[-1], mini_Y[-1]), end="")
-        print()
-
-        mini_auc = 0.
-        prev_x = 0
-        prev_y = 0
-        for x, y in zip(mini_X, mini_Y):
-            if x != prev_x:
-                mini_auc += (x - prev_x) * (y + prev_y) / 2.
-                prev_x = x
-                prev_y = y
-        mini_auc = 1 - (optimal_auc -mini_auc )
-        normOPT = ((1-(optimal_auc - pred_auc)) - mini_auc)/(1 - mini_auc)
-        return normOPT
-
+    
+    
     def OPT(self, codeN):
         '''
         有四个模块m1,m2,m3,m4，真实缺陷个数分别为5，2，1，0,self.real=[5，2，1，0],
@@ -317,8 +173,260 @@ class PerformanceMeasure():
         normOPT = (popt - miniopt) / (1 - miniopt)
 
         return normOPT
+    
+    #normpopt的另外一种实现方法
+    def OPT1(self,codeN):
+        codeN_sum = np.sum(codeN)
+        pred_sum = np.sum(self.pred)
+        real_sum = np.sum(self.real)
+        
+        if pred_sum == 0:
+            pred_sum = 1
+            
+        if codeN_sum == 0:
+            codeN_sum = 1
+
+        optimal_index = [j/i if j!=0 and i!=0 else 0 for i , j in zip(codeN,self.real)]
+        optimal_index = list(np.argsort(optimal_index))
+        optimal_index.reverse()
+
+        pred_index = [j / i if j!=0 and i!=0 else 0 for i, j in zip(codeN, self.pred)]
+        pred_index = list(np.argsort(pred_index))
+        pred_index.reverse()
+
+        optimal_X = [0]
+        optimal_Y = [0]
+        for i in optimal_index:
+            optimal_X.append(codeN[i]/codeN_sum + optimal_X[-1])
+            optimal_Y.append(self.real[i]/real_sum + optimal_Y[-1])
+
+        optimal_auc = 0.
+        prev_x = 0
+        prev_y = 0
+        for x, y in zip(optimal_X,optimal_Y):
+            if x != prev_x:
+                optimal_auc += (x - prev_x) * (y + prev_y)/2.
+                prev_x = x
+                prev_y = y
+
+        pred_X = [0]
+        pred_Y = [0]
+        for i in pred_index:
+            pred_X.append(codeN[i]/codeN_sum + pred_X[-1])
+            pred_Y.append(self.real[i]/real_sum + pred_Y[-1])
+
+        pred_auc = 0.
+        prev_x = 0
+        prev_y = 0
+        for x, y in zip(pred_X, pred_Y):
+            if x != prev_x:
+                pred_auc += (x - prev_x) * (y + prev_y)/2.
+                prev_x = x
+                prev_y = y
+
+        optimal_index.reverse()
+        mini_X = [0]
+        mini_Y = [0]
+        for i in optimal_index:
+            mini_X.append(codeN[i] / codeN_sum + mini_X[-1])
+            mini_Y.append(self.real[i] / real_sum + mini_Y[-1])
+            print("({},{})".format(mini_X[-1], mini_Y[-1]), end="")
+        print()
+
+        mini_auc = 0.
+        prev_x = 0
+        prev_y = 0
+        for x, y in zip(mini_X, mini_Y):
+            if x != prev_x:
+                mini_auc += (x - prev_x) * (y + prev_y) / 2.
+                prev_x = x
+                prev_y = y
+        mini_auc = 1 - (optimal_auc -mini_auc )
+        normOPT = ((1-(optimal_auc - pred_auc)) - mini_auc)/(1 - mini_auc)
+        return normOPT
+    
+    def PofBS20(self, codeN, percentage):
+        '''
+        检测排序前20%的代码行数，能检测出百分之多少的缺陷,Percentage of Bugs
+        有10个模块m1,m1,m2,m3，...,m10. 真实缺陷个数分别为1,4,2,1,5,1,3,1,6,1,self.real=[1,4,2,1,5,1,3,1,6,1]
+        代码行数分别为[10,20,30,40,50,60,70,80,90,100]
+        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为5，self.pred=[0,3,5,1,3,4,7,0,1,1]
+        预测出缺陷密度排序为m3(0.166) m2(0.149) m7(0.100), m6(0.06), m5(0.059), m4(0.025), m9(0.011), m10(0.01), m1(0.0), m8(0.0)
+        pofbs20=(2+4+3)/(1+4+2+1+5+1+3+1+6+1)=0.36
+        '''
+
+        preddensity = [j / i for i, j in zip(codeN, self.pred)]
+
+        tuple_real, tuple_pred = [], []
+        for idx, real in enumerate(self.real):
+            tuple_real.append((idx + 1, real)) #让软件模块的下标是从1开始了，而不是从0开始
+
+        for idx, pred in enumerate(preddensity):
+            tuple_pred.append((idx + 1, pred))
+
+        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
+        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
+
+        #print("sorted_real ：", sorted_real)
+        #print("sorted_pred ：", sorted_pred)
+        #print('totalbugs:',sum(self.real))
+        #print('totalsloc:',sum(codeN))
 
 
+        sloc = 0.0
+        bugs=0.0
+        for i in range(len(self.real)):
+            index = sorted_pred[i][0] #预测缺陷密度排在第i位的模块的index
+            #print ('预测缺陷密度排在第',i,'位的软件模块的index等于：',index)
+            for real in sorted_real:
+                if index == real[0]: #如果缺陷密度排在第一位的模块的index
+                    bugs += real[1]
+                    sloc+=codeN[real[0]]
+                    #print('the real number of bugs of this module is',real[1],'the sloc of this module is',codeN[real[0]])
+                    #print ('the cumulative bugs is',bugs,',the cumulative sloc is',sloc)
+            if sloc>sum(codeN)*percentage:
+                break
+
+        return bugs / sum(self.real)
+
+    
+    def PofD20(self):
+        '''
+        检测排序前20%的模块中有百分之多少是真的是有缺陷的, Percentage of defective modules
+        有10个模块m1,m2,m3,m4，...,m1o. 真实缺陷个数分别为1,0,0,0,5,0,4,0,0,1,self.real=[1,0,0,0,5,0,1,0,0,1]
+        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为5，self.pred=[0,3,5,1,3,4,7,0,1,1]
+        预测出排序在前20%的模块为m7，m3
+        pofb20=1/(20%*10)=0.5
+
+        '''
+        tuple_real, tuple_pred = [], []
+        for idx, real in enumerate(self.real):
+            tuple_real.append((idx + 1, real))
+
+        for idx, pred in enumerate(self.pred):
+            tuple_pred.append((idx + 1, pred))
+
+        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
+        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
+
+        # print("sorted_real ：", sorted_real)
+        # print("sorted_pred ：", sorted_pred)
+
+        length = len(self.real)
+        number = int(length * 0.2)
+
+        total = 0
+        for i in range(number):
+            num = sorted_pred[i][0]
+            for real in sorted_real:
+                if num == real[0]:
+                    if real[1] != 0:
+                        # 有缺陷
+                        total += 1
+                    break
+
+        return total / number
+
+    
+    
+    
+     def PofBS20(self, codeN, percentage):
+        '''
+        检测排序前20%的代码行数，能检测出百分之多少的缺陷,Percentage of Bugs
+        有10个模块m1,m1,m2,m3，...,m10. 真实缺陷个数分别为1,4,2,1,5,1,3,1,6,1,self.real=[1,4,2,1,5,1,3,1,6,1]
+        代码行数分别为[10,20,30,40,50,60,70,80,90,100]
+        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为5，self.pred=[0,3,5,1,3,4,7,0,1,1]
+        预测出缺陷密度排序为m3(0.166) m2(0.149) m7(0.100), m6(0.06), m5(0.059), m4(0.025), m9(0.011), m10(0.01), m1(0.0), m8(0.0)
+        pofbs20=(2+4)/(1+4+2+1+5+1+3+1+6+1)=0.28
+        '''
+
+        preddensity = [j / i for i, j in zip(codeN, self.pred)]
+
+        tuple_real, tuple_pred = [], []
+        for idx, real in enumerate(self.real):
+            tuple_real.append((idx + 1, real)) #让软件模块的下标是从1开始了，而不是从0开始
+
+        for idx, pred in enumerate(preddensity):
+            tuple_pred.append((idx + 1, pred))
+
+        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
+        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
+        '''
+        print("sorted_real ：", sorted_real)
+        print("sorted_pred ：", sorted_pred)
+        print('totalbugs:',sum(self.real))
+        print('totalsloc:',sum(codeN))
+        '''
+
+        sloc = 0.0
+        bugs=0.0
+        for i in range(len(self.real)):
+            index = sorted_pred[i][0] #预测缺陷密度排在第i位的模块的index
+            #print ('预测缺陷密度排在第',i,'位的软件模块的index等于：',index)
+            for real in sorted_real:
+                if index == real[0]: #如果缺陷密度排在第一位的模块的index
+                    bugs += real[1]
+                    sloc+=codeN[real[0]]
+                    #print('the real number of bugs of this module is',real[1],'the sloc of this module is',codeN[real[0]])
+                    #print ('the cumulative bugs is',bugs,',the cumulative sloc is',sloc)
+            if sloc>sum(codeN)*percentage:
+                break
+
+        return bugs / sum(self.real)
+    
+    
+    def ranking(self):
+        '''
+        检测真实缺陷个数最大的模块被排在了第%位，真实缺陷个数第二大的模块被排到了第几位，.....真实缺陷个数第五大的模块被排到了第几位
+        有10个模块m1,m2,m3,m4，...,m10. 真实缺陷个数分别为1,0,3,0,5,0,3,0,0,1,self.real=[1,0,3,0,5,0,3,0,0,1]
+        真实的排序为m5>m3>m7>m1>m10>m2>m4>m6>m8>m9
+        预测出m1缺陷个数为0，m2缺陷个数为3，m3缺陷个数为5，m4缺陷个数为1,....,m10缺陷个数为1，self.pred=[0,3,5,1,3, 4,7,0,1,1]
+        预测出来的排序为m7>m3>m6>m2>m5>m4>m9>m10>m1>m8
+        检测真实缺陷个数最大的模块m5被排在了第5/10位，真实缺陷个数第二大的模块被排到了第2/10位，
+        真实缺陷个数第3大的模块m7被排到了第1/10位，真实缺陷个数第4大的模块m1被排到了第9/10位，真实缺陷个数第5大的模块m10被排到了第8/10 位，
+        输出的是个向量[0.5,0.2,0.1,0.9,0.8]
+        缺陷个数相同时，模块的排序会不同，比如预测的m1和m8的缺陷个数都是0，有可能m1排在m8前面，有可能后面
+        '''
+        # 将self.real=[1,0,3,0,5,0,3,0,0,1] ---->  [(1,1), (2,0), (3,3) ... (10, 1)]形式
+        tuple_real, tuple_pred = [], []
+        for idx, real in enumerate(self.real):
+            tuple_real.append((idx + 1, real))
+
+        for idx, pred in enumerate(self.pred):
+            tuple_pred.append((idx + 1, pred))
+
+        sorted_real = sorted(tuple_real, key=lambda x: x[1], reverse=True)
+        sorted_pred = sorted(tuple_pred, key=lambda x: x[1], reverse=True)
+        # print("sorted_real ：", sorted_real)
+        # print("sorted_pred ：", sorted_pred)
+
+        num_real = []
+        count = 0
+        for item in sorted_real:
+            num_real.append(item[0])
+            count += 1
+            if count > 4:
+                break
+
+            def helper(num_real):
+                """
+                检测真实缺陷个数前五大的模块被排到第几位
+                param: num_real: like [5, 3, 7, 1, 10]
+                根据num_real去sorted_pred中寻找对应的位数
+                """
+                result_vec = []
+                for num in num_real:
+                    for idx, pred in enumerate(sorted_pred):
+                        # pred = (7 ,7)..
+                        if num == pred[0]:
+                            result_vec.append(idx + 1)
+                            break
+                length = len(sorted_pred)
+                return [item / length for item in result_vec]
+
+        return helper(num_real=num_real)
+
+ 
     def calc_UN(self, type):
         """
         计算csranksvm计算u,n，IRSVM计算u
@@ -448,3 +556,11 @@ if __name__ == '__main__':
     real = [1, 0, 0, 1, 5, 0, 0, 0, 0, 1]
     pred = [0, 3, 5, 9, 3, 4, 7, 0, 1, 1]
     print(PerformanceMeasure(real, pred).PofD20())
+    
+    real=np.array([1,4,2,1,5,1,3,1,6,1])
+    pred=np.array([0,3,5,1,3,4,7,0,1,1])
+
+    codeN=[10,20,30,40,50,60,70,80,90,100]
+    print (PerformanceMeasure(real,pred).FPA())
+    print(PerformanceMeasure(real, pred).CLC())
+    print(PerformanceMeasure(real,pred).PofBS20(codeN,0.2))
